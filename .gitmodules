@@ -1,0 +1,6 @@
+[submodule "src/lib/termRequest"]
+	path = src/lib/termRequest
+	url = https://github.com/ox223252/termRequest.git
+[submodule "Configure"]
+	path = Configure
+	url = http://github.com/ox223252/Configure
