@@ -3,6 +3,7 @@
 #include "lib/termRequest/request.h"
 #include "pendu.h"
 #include "snake.h"
+#include "puissance4.h"
 
 enum
 {
@@ -18,6 +19,7 @@ int main ( int argc, char * argv )
 	char * tableMenu [] = {
 		"Pendu",
 		"Snake",
+		"Puissance 4",
 		"Quit",
 		NULL
 	};
@@ -34,6 +36,11 @@ int main ( int argc, char * argv )
 			case NEW_SNAKE:
 			{
 				snake ( );
+				break;
+			}
+			case PUISSANCE_4:
+			{
+				puissance4 ( );
 				break;
 			}
 			case QUIT:
