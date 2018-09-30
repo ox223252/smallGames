@@ -4,6 +4,7 @@
 #include "pendu.h"
 #include "snake.h"
 #include "puissance4.h"
+#include "arena.h"
 
 enum
 {
@@ -20,6 +21,7 @@ int main ( int argc, char * argv )
 		"Pendu",
 		"Snake",
 		"Puissance 4",
+		"Arena",
 		"Quit",
 		NULL
 	};
@@ -41,6 +43,11 @@ int main ( int argc, char * argv )
 			case PUISSANCE_4:
 			{
 				puissance4 ( );
+				break;
+			}
+			case NEW_ARENA:
+			{
+				arena ( );
 				break;
 			}
 			case QUIT:
