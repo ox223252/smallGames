@@ -130,7 +130,7 @@ int pendu ( void )
 	{
 		case ONE:
 		{
-			sprintf ( cmd, "NUM=$(( %d % $(wc res/french.txt -l | cut -d ' ' -f1) )) ; sed -n ${NUM}p < res/french.txt", rand ( ) );
+			sprintf ( cmd, "NUM=$(( %d %% $(wc res/french.txt -l | cut -d ' ' -f1) )) ; sed -n ${NUM}p < res/french.txt", rand ( ) );
 			f = popen ( cmd, "r" );
 			if ( !f )
 			{

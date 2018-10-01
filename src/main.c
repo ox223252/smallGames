@@ -1,10 +1,14 @@
 #include <stdio.h>
 
 #include "lib/termRequest/request.h"
+#include <time.h>
+#include <stdlib.h>
+
 #include "pendu.h"
 #include "snake.h"
 #include "puissance4.h"
 #include "arena.h"
+#include "nim.h"
 
 enum
 {
@@ -27,6 +31,8 @@ int main ( int argc, char * argv )
 		"Quit",
 		NULL
 	};
+
+	srand ( time ( NULL ) );
 	
 	do
 	{

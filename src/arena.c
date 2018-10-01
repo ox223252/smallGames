@@ -312,7 +312,7 @@ void arena ( void )
 
 		clearScreen ( lines + 1 );
 		discoverArena ( table, lines, cols, user );
-		printArena ( table, lines, cols, user );
+		printArena ( ( const arenaCell ** const )table, lines, cols, user );
 		
 		setPosition ( lines + 1, 1 );
 
@@ -326,7 +326,7 @@ void arena ( void )
 		if ( ( user[ 0 ].food == 0 ) ||
 			( user[ 0 ].water == 0 ) )
 		{
-			printf ( "You're dead\n" );
+			printf ( "\r\e[1;31mYou're dead\e[0m \n" );
 			break;
 		}
 	}
