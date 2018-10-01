@@ -10,8 +10,9 @@ enum
 {
 	NEW_PENDU,
 	NEW_SNAKE,
-	NEW_ARENA,
 	PUISSANCE_4,
+	NEW_ARENA,
+	NEW_NIM,
 	QUIT
 };
 
@@ -22,6 +23,7 @@ int main ( int argc, char * argv )
 		"Snake",
 		"Puissance 4",
 		"Arena",
+		"Nim",
 		"Quit",
 		NULL
 	};
@@ -48,6 +50,11 @@ int main ( int argc, char * argv )
 			case NEW_ARENA:
 			{
 				arena ( );
+				break;
+			}
+			case NEW_NIM:
+			{
+				nim ( );
 				break;
 			}
 			case QUIT:
