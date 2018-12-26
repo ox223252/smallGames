@@ -3,15 +3,20 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <errno.h>
 
 #include "lib/termRequest/request.h"
-
 
 enum
 {
 	ONE,
 	TWO
 };
+
+#ifdef _WIN32
+#include <conio.h>
+#endif
+
 
 static int printPendu ( int id, int x, int y )
 {
@@ -117,30 +122,64 @@ int pendu ( void )
 	int result = 0;
 
 	int nbCoups = 1;
+	int nbErrors = 0;
 
 	void * mask = NULL;
 
 	char word[ 64 ] = { 0 };
-	char cmd[ 256 ] = { 0 };
+	char fileName[ 64 ] = { 0 };
 	uint64_t found = 0;
 
 	srand ( time ( NULL ) );
 
+
+	// get one word
 	switch ( menu ( 2, "un joueur", "deux joueurs", NULL ) )
 	{
 		case ONE:
 		{
-			sprintf ( cmd, "NUM=$(( %d %% $(wc res/french.txt -l | cut -d ' ' -f1) )) ; sed -n ${NUM}p < res/french.txt", rand ( ) );
-			f = popen ( cmd, "r" );
+			printf ( "path du dictionnaire :\n" );
+			scanf ( "%63s", fileName );
+			while ( getchar ( ) != '\n' );
+			
+			f = fopen ( fileName, "r" );
 			if ( !f )
 			{
+				printf ( "%s\n", strerror ( errno ) );
 				return ( __LINE__ );
 			}
 
-			if ( !fscanf ( f, "%63s", word ) )
+			nbLines = 0;
+			while ( fgets ( word, 63, f ) != NULL )
 			{
-				fclose ( f );
-				return ( __LINE__ );
+				nbLines++;
+			}
+
+			if ( nbLines > 65535 )
+			{
+				nbLines = rand ( ) * rand ( ) % nbLines;
+			}
+			else
+			{
+				nbLines = rand ( ) % nbLines;
+			}
+
+			fseek ( f, 0, SEEK_SET );
+
+			for ( i = 0; i < nbLines; i++ )
+			{
+				if ( !fgets ( word, 63, f ) )
+				{
+					fclose ( f );
+					return ( __LINE__ );
+				}
+			}
+
+			// remove \n and \r if they are existing
+			while ( ( word[ strlen ( word ) - 1 ] == '\n' ) ||
+				( word[ strlen ( word ) - 1 ] == '\r' ) )
+			{
+				word[ strlen ( word ) - 1 ] = '\0';
 			}
 
 			fclose ( f );
@@ -154,46 +193,74 @@ int pendu ( void )
 			break;
 		}
 	}
+
+	// clean part of screen
 	setPosition ( -2, 2 );
+	#ifdef __linux__
 	printf ( "\e[2K\n\e[2K" );
+	#endif
 
 	setBlockMode ( &mask, true );
 
+	// print error line
 	setPosition ( -2, 3 );
 	printf ( "____________ \n" );
 	
+	// print word line
 	setPosition ( -1, 3 );
 	for ( i = 0; i < strlen ( word ); i++ )
 	{
-		printf ( "_" );
+		if ( ( word[ i ] == ' ' ) ||
+			( word[ i ] == '-' ) )
+		{
+			printf ( "%c", word[ i ] );
+			found |= 1 << i;
+		}
+		else
+		{
+			printf ( "_" );
+		}
 	}
 
 	do
 	{
+		#ifdef __linux__
 		c = getchar ( );
+		#elif _WIN32
+		c = _getch ( );
+		#endif
 
+		result = 1;
 		for ( i = 0; i < strlen ( word ); i++ )
 		{
 			if ( c == word[ i ] )
 			{
 				found |= 1 << i;
+				result = 0;
 			}
+		}
+
+		if ( result )
+		{
+			nbErrors++;
+			setPosition ( -2, nbErrors + 2 );
+			printf ( "%c", c );
 		}
 
 		if ( found == ( ( 1 << i ) - 1 ) )
 		{
 			setPosition ( -2, 3 );
-			printf ( "mot trouvé en %d fois \n", nbCoups );
+			printf ( "mot trouve en %d fois \n", nbCoups );
 
 			setPosition ( -1, 3 );
 			printf ( "%s \n", word );
 			break;
 		}
 
-		setPosition ( -2, nbCoups + 2 );
-		printf ( "%c", c );
-	
-		result = printPendu ( nbCoups++, -9, 2 );
+
+		nbCoups++;
+
+		result = printPendu ( nbErrors, -9, 2 );
 		
 		setPosition ( -1, 3 );
 
@@ -217,7 +284,7 @@ int pendu ( void )
 	if ( result )
 	{
 		setPosition ( -2, 2 );
-		printf ( " le mot était %s\n", word );
+		printf ( " le mot etait %s\n", word );
 	}
 	getchar ( );
 
