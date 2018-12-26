@@ -36,23 +36,12 @@ typedef struct
 }
 position_t;
 
-static void clearScreen ( int sizeX );
 static void printSnake ( snake_t * const snake );
 static int moveSnake ( snake_t * const snake, const KEY_CODE mvt, position_t * const fruit, int cols, int lines );
 static int isInSnake ( snake_t * const snake, int x, int y );
 static void freeSnake ( snake_t * const snake );
 static int sizeOfSnake ( snake_t * const snake );
 static int initSnake ( snake_t ** const snake, int x, int y );
-
-
-static void clearScreen ( int sizeX )
-{
-	printf ( "\e[1;1H" );
-	while ( sizeX-- )
-	{
-		printf ( "\e[2K\n" );
-	}
-}
 
 static void printSnake ( snake_t * const snake )
 {
@@ -222,8 +211,6 @@ static int initSnake ( snake_t ** const snake, int x, int y )
 
 void snake ( void )
 {
-	void * mask = NULL;
-
 	int cols = 0;
 	int lines = 0;
 	uint32_t speed = 2000000;
@@ -307,13 +294,6 @@ void snake ( void )
 
 	mvt = 0;
 	
-	#if __linux__
-	if ( setBlockMode ( &mask, true ) )
-	{
-		return;
-	}
-	#endif
-
 	setGetCharTimeOut ( 0, 0 );
 
 	while ( 1 )
@@ -337,7 +317,7 @@ void snake ( void )
 		}
 
 
-		clearScreen ( lines );
+		clear ( );
 		printf ( "\e[%d;%dH@", fruit.x, fruit.y );
 		printSnake ( snake );
 
@@ -346,13 +326,12 @@ void snake ( void )
 		setPosition ( lines + 1, 0 );
 
 		#ifdef __linux__
-		while ( getchar ( ) > 0 );
+		while ( _getch ( ) > 0 );
 		#endif
 
 		usleep ( speed );
 	}
 	setGetCharTimeOut ( 0, 1 );
-	resetBlockMode ( mask );
 	
 	printf ( "\n" );
 
