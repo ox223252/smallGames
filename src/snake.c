@@ -5,6 +5,11 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#include <conio.h>
+#include <windows.h>
+#endif
+
 #include "lib/termRequest/request.h"
 
 enum
@@ -33,7 +38,7 @@ position_t;
 
 static void clearScreen ( int sizeX );
 static void printSnake ( snake_t * const snake );
-static int moveSnake ( snake_t * const snake, const int mvt, position_t * const fruit, int cols, int lines );
+static int moveSnake ( snake_t * const snake, const KEY_CODE mvt, position_t * const fruit, int cols, int lines );
 static int isInSnake ( snake_t * const snake, int x, int y );
 static void freeSnake ( snake_t * const snake );
 static int sizeOfSnake ( snake_t * const snake );
@@ -58,25 +63,28 @@ static void printSnake ( snake_t * const snake )
 	}
 }
 
-static int moveSnake ( snake_t * const snake, const int mvt, position_t * const fruit, int cols, int lines )
+static int moveSnake ( snake_t * const snake, const KEY_CODE mvt, position_t * const fruit, int cols, int lines )
 {
+	static KEY_CODE last = KEYCODE_NONE;
+
 	snake_t * tmp = NULL;
-	if ( ( snake->next == NULL ) &&
-		( mvt == 0 ) )
+
+	if ( mvt != KEYCODE_NONE )
+	{
+		last = mvt;
+	}
+	else if ( ( last == KEYCODE_NONE ) &&
+		( !snake->next ) )
 	{
 		return ( 0 );
 	}
-	else if ( snake->next )
+	
+	if ( snake->next )
 	{
-		moveSnake ( snake->next, 0, fruit, cols, lines );
+		moveSnake ( snake->next, KEYCODE_NONE, fruit, cols, lines );
 
 		snake->next->x = snake->x;
 		snake->next->y = snake->y;
-	}
-
-	if ( !mvt )
-	{
-		return ( 0 );
 	}
 
 	if ( isInSnake ( snake, fruit->x, fruit->y ) )
@@ -90,15 +98,17 @@ static int moveSnake ( snake_t * const snake, const int mvt, position_t * const 
 
 		initSnake ( &tmp->next, fruit->x, fruit->y );
 
+		snake->next->x = snake->x;
+		snake->next->y = snake->y;
 
 		fruit->x = -1;
 		fruit->y = -1;
-		return ( 0 );
+		// return ( 0 );
 	}
 
-	switch ( mvt )
+	switch ( last )
 	{
-		case 0x41: // up
+		case KEYCODE_UP: // up
 		{
 			snake->x--;
 			if ( snake->x <= 0 )
@@ -107,7 +117,7 @@ static int moveSnake ( snake_t * const snake, const int mvt, position_t * const 
 			}
 			break;
 		}
-		case 0x42: // down
+		case KEYCODE_DOWN: // down
 		{
 			snake->x++;
 			if ( snake->x > lines )
@@ -116,7 +126,7 @@ static int moveSnake ( snake_t * const snake, const int mvt, position_t * const 
 			}
 			break;
 		}
-		case 0x43: // right
+		case KEYCODE_RIGHT: // right
 		{
 			snake->y++;
 			if ( snake->y > cols )
@@ -125,7 +135,7 @@ static int moveSnake ( snake_t * const snake, const int mvt, position_t * const 
 			}
 			break;
 		}
-		case 0x44: // left
+		case KEYCODE_LEFT: // left
 		{
 			snake->y--;
 			if ( snake->y <= 0 )
@@ -133,6 +143,14 @@ static int moveSnake ( snake_t * const snake, const int mvt, position_t * const 
 				snake->y = cols;
 			}
 			break;
+		}
+		case KEYCODE_NONE:
+		{
+			break;
+		}
+		case KEYCODE_ESCAPE:
+		{
+			return ( __LINE__ );
 		}
 	}
 
@@ -208,7 +226,7 @@ void snake ( void )
 
 	int cols = 0;
 	int lines = 0;
-	uint32_t speed = 200000;
+	uint32_t speed = 2000000;
 
 	int i = 0;
 	int mvt;
@@ -287,29 +305,20 @@ void snake ( void )
 	fruit.x = rand ( ) % ( lines - 1 ) + 1;
 	fruit.y = rand ( ) % ( cols - 1 ) + 1;
 
+	mvt = 0;
+	
+	#if __linux__
 	if ( setBlockMode ( &mask, true ) )
 	{
 		return;
 	}
-	setGetCharTimeOut ( 0, 0 );
+	#endif
 
-	mvt = 0;
+	setGetCharTimeOut ( 0, 0 );
 
 	while ( 1 )
 	{
-		if ( getchar ( ) == 0x1b )
-		{
-			if ( getchar ( ) > 0 )
-			{
-				mvt = getchar ( );
-			}
-			else
-			{
-				break;
-			}
-		}
-
-		if ( moveSnake ( snake, mvt, &fruit, cols, lines ) )
+		if ( moveSnake ( snake, getMovePad ( true ), &fruit, cols, lines ) )
 		{
 			break;
 		}
@@ -327,22 +336,25 @@ void snake ( void )
 			}
 		}
 
+
 		clearScreen ( lines );
 		printf ( "\e[%d;%dH@", fruit.x, fruit.y );
 		printSnake ( snake );
 
-	
-		printf ( "\e[%d;1Hsnake size : %3d / speed : %3ums\e[%d;%dH", lines + 1, sizeOfSnake ( snake ), speed / 1000, lines + 1, cols );
+		setPosition ( lines + 1 , 1 );
+		printf ( "snake size : %3d / speed : %3ums", sizeOfSnake ( snake ), speed / 1000 );
+		setPosition ( lines + 1, 0 );
+
+		#ifdef __linux__
 		while ( getchar ( ) > 0 );
+		#endif
 
 		usleep ( speed );
 	}
 	setGetCharTimeOut ( 0, 1 );
+	resetBlockMode ( mask );
 	
 	printf ( "\n" );
-
-	resetBlockMode ( mask );
-
 
 	freeSnake ( snake );
 	snake = NULL;

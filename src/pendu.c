@@ -132,7 +132,6 @@ int pendu ( void )
 
 	srand ( time ( NULL ) );
 
-
 	// get one word
 	switch ( menu ( 2, "un joueur", "deux joueurs", NULL ) )
 	{
